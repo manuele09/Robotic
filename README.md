@@ -4,59 +4,70 @@
 
 ## Table of Contents
 - [Installation](#installation)
-  - [Installing ROS Melodic](#installing-ros-melodic)
+  - [ROS Melodic Installation](#ros-melodic-installation)
+  - [Dependencies Installation](#dependencies-installation)
+  - [Setting up LVI-SAM](#setting-up-lvi-sam)
   - [Setting up Velodyne](#setting-up-velodyne)
+  - [Setting up USB Camera](#setting-up-usb-camera)
 - [Usage](#usage)
   - [Launching Velodyne Node](#launching-velodyne-node)
+  - [Launching USB Camera Node](#launching-usb-camera-node)
 
 ---
 
 ## Installation
 
-### Installing ROS Melodic
+### ROS Melodic Installation
 
-To install ROS Melodic on Ubuntu, follow these steps:
+Install ROS Melodic on Ubuntu with these commands:
 
-1. **Set up the ROS repository:**  
-   Add the ROS package repository to your sources list:
-   ```bash
-   sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-   ```
+```bash
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+sudo apt install curl
+curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+sudo apt update
+sudo apt install ros-melodic-desktop-full
 
-2. **Install `curl` (if not already installed):**  
-   ```bash
-   sudo apt install curl
-   ```
+echo "source /opt/ros/melodic/setup.bash" >> ~/bashrc
+source ~/bashrc
 
-3. **Add the ROS key for package verification:**  
-   ```bash
-   curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
-   ```
+sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
+sudo rosdep init
+rosdep update
+```
 
-4. **Update the package index:**  
-   ```bash
-   sudo apt update
-   ```
+### Dependencies Installation
 
-5. **Install ROS Melodic (Desktop Full version):**  
-   ```bash
-   sudo apt install ros-melodic-desktop-full
-   ```
+#### GTSAM (Georgia Tech Smoothing and Mapping library)
+```bash
+sudo add-apt-repository ppa:borglab/gtsam-release-4.0
+sudo apt update
+sudo apt install libgtsam-dev libgtsam-unstable-dev
+```
 
-6. **Set up environment variables:**  
-   ```bash
-   echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
-   source ~/.bashrc
-   ```
+#### Ceres Solver (Optimization library)
+```bash
+sudo apt-get install -y libgoogle-glog-dev libatlas-base-dev
+wget -O ~/Downloads/ceres.zip https://github.com/ceres-solver/ceres-solver/archive/1.14.0.zip
+cd ~/Downloads/ && unzip ceres.zip -d ~/Downloads/
+cd ~/Downloads/ceres-solver-1.14.0
+mkdir ceres-bin && cd ceres-bin
+cmake ..
+sudo make install -j4
+```
 
-7. **Install additional dependencies:**  
-   ```bash
-   sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
-   ```
+### Setting up LVI-SAM
+
+After installing dependencies, set up LVI-SAM with these commands:
+
+```bash
+cd ~/LVI-SAM/src
+git clone https://github.com/TixiaoShan/LVI-SAM.git
+cd ..
+catkin_make -j4
+```
 
 ### Setting up Velodyne
-
-To set up the Velodyne drivers, run the following commands:
 
 ```bash
 mkdir -p velodyne/src
@@ -69,13 +80,66 @@ rosdep install --from-paths src --ignore-src --rosdistro melodic -y
 catkin_make -j2
 ```
 
+### Setting up USB Camera
+
+1. Install the USB camera package:
+   ```bash
+   sudo apt install ros-melodic-usb-cam
+   ```
+
+2. Check available video interfaces:
+   ```bash
+   ls /dev/video*
+   ```
+
+3. Get camera information (replace `/dev/video2` with your device):
+   ```bash
+   v4l2-ctl --device=/dev/video2 --all
+   ```
+
+4. Modify the launch file:
+   ```bash
+   sudo gedit /opt/ros/melodic/share/usb_cam/launch/usb_cam-test.launch
+   ```
+
+   The default launch file contains:
+   ```xml
+   <launch>
+     <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+       <param name="video_device" value="/dev/video0" />
+       <param name="image_width" value="640" />
+       <param name="image_height" value="480" />
+       <param name="pixel_format" value="yuyv" />
+       <param name="color_format" value="yuv422p" />
+       <param name="camera_frame_id" value="usb_cam" />
+       <param name="io_method" value="mmap"/>
+     </node>
+     <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+       <remap from="image" to="/usb_cam/image_raw"/>
+       <param name="autosize" value="true" />
+     </node>
+   </launch>
+   ```
+
+   Modify these parameters according to your camera specifications:
+   - `video_device`
+   - `image_width`
+   - `image_height` 
+   - `pixel_format`
+   - `color_format`
+
+   For format conventions and additional parameters, see:
+   - [ROS USB_Cam Pixel Formats Reference](http://wiki.ros.org/usb_cam#Pixel_formats.2Fencodings_reference)
+   - [USB_Cam Node Parameters Documentation](http://wiki.ros.org/usb_cam/Old%20Versions)
+
 ## Usage
 
 ### Launching Velodyne Node
-
-To launch the Velodyne node:
-
 ```bash
 source devel/setup.bash
 roslaunch velodyne_pointcloud VLP16_points.launch
 ```
+
+### Launching USB Camera Node
+```bash
+roslaunch usb_cam usb_cam-test.launch
