@@ -61,6 +61,7 @@ sudo make install -j4
 After installing dependencies, set up LVI-SAM with these commands:
 
 ```bash
+mkdir -p ~/LVI-SAM/src
 cd ~/LVI-SAM/src
 git clone https://github.com/TixiaoShan/LVI-SAM.git
 cd ..
@@ -70,8 +71,8 @@ catkin_make -j4
 ### Setting up Velodyne
 
 ```bash
-mkdir -p velodyne/src
-cd velodyne/src
+mkdir -p ~/velodyne/src
+cd ~/velodyne/src
 git clone -b melodic-devel https://github.com/ros-drivers/velodyne.git
 cd ..
 sudo rosdep init
@@ -136,6 +137,7 @@ catkin_make -j2
 
 ### Launching Velodyne Node
 ```bash
+cd ~/velodyne
 source devel/setup.bash
 roslaunch velodyne_pointcloud VLP16_points.launch
 ```
