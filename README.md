@@ -12,6 +12,7 @@
 - [Usage](#usage)
   - [Launching Velodyne Node](#launching-velodyne-node)
   - [Launching USB Camera Node](#launching-usb-camera-node)
+  - [Launching LVI-SAM Node](#launching-lvi-sam-node)
 
 ---
 
@@ -145,3 +146,21 @@ roslaunch velodyne_pointcloud VLP16_points.launch
 ### Launching USB Camera Node
 ```bash
 roslaunch usb_cam usb_cam-test.launch
+```
+
+### Launching LVI-SAM Node
+
+1. First, download one of the sample datasets (.bag files) from:
+   - [LVI-SAM Google Drive Datasets](https://drive.google.com/drive/folders/1q2NZnsgNmezFemoxhHnrDnp1JV_bqrgV?usp=sharing)
+
+2. In one terminal, navigate to your LVI-SAM workspace and launch the node:
+   ```bash
+   cd ~/LVI-SAM
+   source devel/setup.bash
+   roslaunch lvi_sam run.launch
+   ```
+
+3. In another terminal, play the downloaded dataset:
+   ```bash
+   rosbag play path/to/dataset.bag
+   ```
