@@ -137,11 +137,23 @@ catkin_make -j2
 ## Usage
 
 ### Launching Velodyne Node
-```bash
-cd ~/velodyne
-source devel/setup.bash
-roslaunch velodyne_pointcloud VLP16_points.launch
-```
+
+1. **Configure Network Settings**:
+   Use these commands (replace `eth0` with your Ethernet interface name from `ifconfig`):
+     ```bash
+     sudo ifconfig eth0 10.0.1.1
+     sudo route add 10.0.1.7 eth0
+     ```
+
+3. **Access Velodyne Interface**:
+   - Open a browser and navigate to `http://10.0.1.7/` to access the VLP-16 web interface
+
+4. **Launch the Velodyne ROS node**:
+   ```bash
+   cd ~/velodyne
+   source devel/setup.bash
+   roslaunch velodyne_pointcloud VLP16_points.launch
+   ```
 
 ### Launching USB Camera Node
 ```bash
