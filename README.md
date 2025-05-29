@@ -3,25 +3,33 @@
 **Description:** A brief description of your project and its purpose.
 
 ## Table of Contents
+- [Prerequisites](#prerequisites)
 - [Installation](#installation)
-  - [ROS Melodic Installation](#ros-melodic-installation)
-  - [Dependencies Installation](#dependencies-installation)
-  - [Setting up LVI-SAM](#setting-up-lvi-sam)
-  - [Setting up Velodyne](#setting-up-velodyne)
-  - [Setting up USB Camera](#setting-up-usb-camera)
+  - [ROS Melodic](#ros-melodic)
+  - [Core Dependencies](#core-dependencies)
+  - [Sensor Packages](#sensor-packages)
+    - [Velodyne Lidar](#velodyne-lidar)
+    - [USB Camera](#usb-camera)
+    - [IMU Setup](#imu-setup)
+  - [LVI-SAM Framework](#lvi-sam-framework)
 - [Usage](#usage)
-  - [Launching Velodyne Node](#launching-velodyne-node)
-  - [Launching USB Camera Node](#launching-usb-camera-node)
-  - [Launching LVI-SAM Node](#launching-lvi-sam-node)
+  - [Running Sensor Nodes](#running-sensor-nodes)
+    - [Velodyne Lidar](#velodyne-lidar-1)
+    - [USB Camera](#usb-camera-1)
+    - [IMU](#imu)
+  - [Running LVI-SAM](#running-lvi-sam)
+  - [Running with Sample Data](#running-with-sample-data)
 
 ---
 
+## Prerequisites
+- Ubuntu 18.04 (for ROS Melodic compatibility)
+- Supported hardware:
+  - Velodyne VLP-16 Lidar
+
 ## Installation
 
-### ROS Melodic Installation
-
-Install ROS Melodic on Ubuntu with these commands:
-
+### ROS Melodic
 ```bash
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 sudo apt install curl
@@ -29,15 +37,15 @@ curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo ap
 sudo apt update
 sudo apt install ros-melodic-desktop-full
 
-echo "source /opt/ros/melodic/setup.bash" >> ~/bashrc
-source ~/bashrc
+echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
+source ~/.bashrc
 
 sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
 sudo rosdep init
 rosdep update
 ```
 
-### Dependencies Installation
+### Core Dependencies
 
 #### GTSAM (Georgia Tech Smoothing and Mapping library)
 ```bash
@@ -46,7 +54,7 @@ sudo apt update
 sudo apt install libgtsam-dev libgtsam-unstable-dev
 ```
 
-#### Ceres Solver (Optimization library)
+#### Ceres Solver
 ```bash
 sudo apt-get install -y libgoogle-glog-dev libatlas-base-dev
 wget -O ~/Downloads/ceres.zip https://github.com/ceres-solver/ceres-solver/archive/1.14.0.zip
@@ -57,20 +65,9 @@ cmake ..
 sudo make install -j4
 ```
 
-### Setting up LVI-SAM
+### Sensor Packages
 
-After installing dependencies, set up LVI-SAM with these commands:
-
-```bash
-mkdir -p ~/LVI-SAM/src
-cd ~/LVI-SAM/src
-git clone https://github.com/TixiaoShan/LVI-SAM.git
-cd ..
-catkin_make -j4
-```
-
-### Setting up Velodyne
-
+#### Velodyne Lidar
 ```bash
 mkdir -p ~/velodyne/src
 cd ~/velodyne/src
@@ -82,97 +79,97 @@ rosdep install --from-paths src --ignore-src --rosdistro melodic -y
 catkin_make -j2
 ```
 
-### Setting up USB Camera
+#### USB Camera
+```bash
+sudo apt install ros-melodic-usb-cam
+```
 
-1. Install the USB camera package:
-   ```bash
-   sudo apt install ros-melodic-usb-cam
-   ```
+#### IMU Setup
+```bash
+mkdir -p ~/imu_ws/src
+cd ~/imu_ws/src
+wget https://www.syd-dynamics.com/download/transducerm_example_ros-pkg
+unzip transducerm_example_ros-pkg
+cd ~/imu_ws
+catkin_make
+```
 
-2. Check available video interfaces:
-   ```bash
-   ls /dev/video*
-   ```
-
-3. Get camera information (replace `/dev/video2` with your device):
-   ```bash
-   v4l2-ctl --device=/dev/video2 --all
-   ```
-
-4. Modify the launch file:
-   ```bash
-   sudo gedit /opt/ros/melodic/share/usb_cam/launch/usb_cam-test.launch
-   ```
-
-   The default launch file contains:
-   ```xml
-   <launch>
-     <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
-       <param name="video_device" value="/dev/video0" />
-       <param name="image_width" value="640" />
-       <param name="image_height" value="480" />
-       <param name="pixel_format" value="yuyv" />
-       <param name="color_format" value="yuv422p" />
-       <param name="camera_frame_id" value="usb_cam" />
-       <param name="io_method" value="mmap"/>
-     </node>
-     <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
-       <remap from="image" to="/usb_cam/image_raw"/>
-       <param name="autosize" value="true" />
-     </node>
-   </launch>
-   ```
-
-   Modify these parameters according to your camera specifications:
-   - `video_device`
-   - `image_width`
-   - `image_height` 
-   - `pixel_format`
-   - `color_format`
-
-   For format conventions and additional parameters, see:
-   - [ROS USB_Cam Pixel Formats Reference](http://wiki.ros.org/usb_cam#Pixel_formats.2Fencodings_reference)
-   - [USB_Cam Node Parameters Documentation](http://wiki.ros.org/usb_cam/Old%20Versions)
+### LVI-SAM Framework
+```bash
+mkdir -p ~/LVI-SAM/src
+cd ~/LVI-SAM/src
+git clone https://github.com/TixiaoShan/LVI-SAM.git
+cd ..
+catkin_make -j4
+```
 
 ## Usage
 
-### Launching Velodyne Node
+### Running Sensor Nodes
 
-1. **Configure Network Settings**:
-   Use these commands (replace `eth0` with your Ethernet interface name from `ifconfig`):
-     ```bash
-     sudo ifconfig eth0 10.0.1.1
-     sudo route add 10.0.1.7 eth0
-     ```
+#### Velodyne Lidar
+1. Configure network:
+   ```bash
+   sudo ifconfig eth0 10.0.1.1
+   sudo route add 10.0.1.7 eth0
+   ```
 
-3. **Access Velodyne Interface**:
-   - Open a browser and navigate to `http://10.0.1.7/` to access the VLP-16 web interface
-
-4. **Launch the Velodyne ROS node**:
+2. Launch node:
    ```bash
    cd ~/velodyne
    source devel/setup.bash
    roslaunch velodyne_pointcloud VLP16_points.launch
    ```
 
-### Launching USB Camera Node
-```bash
-roslaunch usb_cam usb_cam-test.launch
-```
-
-### Launching LVI-SAM Node
-
-1. First, download one of the sample datasets (.bag files) from:
-   - [LVI-SAM Google Drive Datasets](https://drive.google.com/drive/folders/1q2NZnsgNmezFemoxhHnrDnp1JV_bqrgV?usp=sharing)
-
-2. In one terminal, navigate to your LVI-SAM workspace and launch the node:
+#### USB Camera
+1. Identify your camera:
    ```bash
-   cd ~/LVI-SAM
-   source devel/setup.bash
-   roslaunch lvi_sam run.launch
+   ls /dev/video*
+   v4l2-ctl --device=/dev/video0 --all
    ```
 
-3. In another terminal, play the downloaded dataset:
+2. Modify launch file (example values shown):
+   ```bash
+   sudo nano /opt/ros/melodic/share/usb_cam/launch/usb_cam-test.launch
+   ```
+   ```xml
+   <param name="video_device" value="/dev/video0" />
+   <param name="image_width" value="640" />
+   <param name="image_height" value="480" />
+   <param name="pixel_format" value="yuyv" />
+   ```
+
+3. Launch node:
+   ```bash
+   roslaunch usb_cam usb_cam-test.launch
+   ```
+
+#### IMU
+1. Configure serial port in `TMSerial.cpp`:
+   ```cpp
+   std::string imu_port = "/dev/ttyUSB0";
+   int baudrate = 115200;
+   ```
+
+2. Launch node:
+   ```bash
+   cd ~/imu_ws
+   source devel/setup.bash
+   rosrun TransducerM_pkg TMSerial
+   ```
+
+### Running LVI-SAM
+```bash
+cd ~/LVI-SAM
+source devel/setup.bash
+roslaunch lvi_sam run.launch
+```
+
+### Running with Sample Data
+1. Download sample dataset from:
+   [LVI-SAM Google Drive](https://drive.google.com/drive/folders/1q2NZnsgNmezFemoxhHnrDnp1JV_bqrgV)
+
+2. Play the bag file:
    ```bash
    rosbag play path/to/dataset.bag
    ```
