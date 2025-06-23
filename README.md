@@ -1,6 +1,4 @@
-# Project Name
-
-**Description:** A brief description of your project and its purpose.
+# LVI-SAM
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
@@ -25,7 +23,9 @@
 ## Prerequisites
 - Ubuntu 18.04 (for ROS Melodic compatibility)
 - Supported hardware:
-  - Velodyne VLP-16 Lidar
+  - Lidar: Velodyne VLP-16 Lidar
+  - Imu: TransducerM TM200
+  - Camera: Logitech V-UBS47
 
 ## Installation
 
